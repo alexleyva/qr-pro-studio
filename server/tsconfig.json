@@ -1,11 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "CommonJS",
+    "module": "Node16",
     "allowJs": true,
     "checkJs": false,
     "noEmit": true,
-    "moduleResolution": "node"
+    "moduleResolution": "Node16"
   },
   "include": ["**/*.js"],
   "exclude": ["node_modules"]

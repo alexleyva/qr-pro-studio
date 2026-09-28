@@ -139,7 +139,7 @@ export const QRDesignPanel: React.FC<QRDesignPanelProps> = ({ config, onChange }
     if (config.styling.frame) {
       const newConfig = { ...config };
       newConfig.styling.frame = {
-        ...newConfig.styling.frame,
+        ...config.styling.frame,
         rotation: 0,
         scale: 1,
         layer: 'back'
