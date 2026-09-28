@@ -84,7 +84,8 @@ export const QRPreview: React.FC<QRPreviewProps> = ({ config }) => {
     if (!qrCodeRef.current) return;
 
     if (!config.styling.frame || config.styling.frame.type === 'none') {
-      qrCodeRef.current.download({ name: 'qr-pro-studio', extension: format });
+      const ext = format === 'pdf' ? 'png' : format;
+      qrCodeRef.current.download({ name: 'qr-pro-studio', extension: ext });
       return;
     }
 
@@ -122,7 +123,7 @@ export const QRPreview: React.FC<QRPreviewProps> = ({ config }) => {
     // 4. Dibujar el Código QR (Reducido al 55% para seguridad)
     const qrBlob = await qrCodeRef.current.getRawData('png');
     if (qrBlob) {
-      const qrImg = await blobToImage(qrBlob);
+      const qrImg = await blobToImage(qrBlob as Blob);
       const qrDrawSize = exportSize * 0.55; // Mucho más pequeño para no solapar marcos rotados
       const qrPos = (exportSize - qrDrawSize) / 2;
       ctx.drawImage(qrImg, qrPos, qrPos, qrDrawSize, qrDrawSize);

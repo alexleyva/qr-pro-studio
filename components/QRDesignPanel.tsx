@@ -66,6 +66,9 @@ export const QRDesignPanel: React.FC<QRDesignPanelProps> = ({ config, onChange }
     newConfig.styling.frame = {
       ...(newConfig.styling.frame || {}),
       type: 'custom',
+      text: newConfig.styling.frame?.text || 'SCAN ME',
+      color: newConfig.styling.frame?.color || '#1a1a1a',
+      textColor: newConfig.styling.frame?.textColor || '#ffffff',
       customSrc: frame.imageUrl,
       rotation: 0,
       scale: 1,
