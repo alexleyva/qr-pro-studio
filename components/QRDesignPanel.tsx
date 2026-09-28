@@ -1,11 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { QRConfig, DotType, CornerType } from '../types';
-import { DOT_STYLES, CORNER_STYLES, FRAME_STYLES, PRESET_LOGOS, PRESET_FRAMES } from '../constants';
-import { Palette, Box, Image as ImageIcon, Layout, Sliders, Pipette, RotateCw, Target, Type as TypeIcon, Check, Trash2, Plus, Upload, Maximize, Layers, RefreshCw, Grid3x3 } from 'lucide-react';
-import { framesAPI } from '../services/api';
-import { useAuth } from '../context/AuthContext';
+import { DOT_STYLES, CORNER_STYLES, FRAME_STYLES } from '../constants';
+import { framesAPI, Frame, logosAPI, Logo } from '../services/api';
 import { UploadFrameModal } from './UploadFrameModal';
+import { UploadLogoModal } from './UploadLogoModal';
+import { Palette, Box, Image as ImageIcon, Layout, Sliders, Pipette, RotateCw, Target, Type as TypeIcon, Check, Trash2, Plus, Upload, Maximize, Layers, RefreshCw } from 'lucide-react';
 
 interface QRDesignPanelProps {
   config: QRConfig;
@@ -18,33 +18,84 @@ const PRESET_COLORS = [
 
 export const QRDesignPanel: React.FC<QRDesignPanelProps> = ({ config, onChange }) => {
   const [activeTab, setActiveTab] = useState<'frame' | 'shape' | 'logo'>('shape');
-  const [customFrames, setCustomFrames] = useState<any[]>([]);
-  const [loadingFrames, setLoadingFrames] = useState(false);
+  const [frames, setFrames] = useState<Frame[]>([]);
   const [showUploadModal, setShowUploadModal] = useState(false);
-  const { isAuthenticated } = useAuth();
-
-  // Cargar marcos desde la base de datos
-  useEffect(() => {
-    loadFrames();
-  }, []);
+  const [framesLoading, setFramesLoading] = useState(true);
+  const [framesError, setFramesError] = useState(false);
 
   const loadFrames = async () => {
-    setLoadingFrames(true);
+    setFramesLoading(true);
+    setFramesError(false);
     try {
-      const response = await framesAPI.getAll();
-      console.log('Marcos cargados:', response.frames);
-      setCustomFrames(response.frames || []);
-    } catch (error) {
-      console.error('Error al cargar marcos:', error);
-      setCustomFrames([]); // Asegurar que sea un array vacío en caso de error
+      const data = await framesAPI.list();
+      setFrames(data.frames);
+    } catch (err) {
+      console.error('Error al cargar marcos:', err);
+      setFramesError(true);
     } finally {
-      setLoadingFrames(false);
+      setFramesLoading(false);
     }
   };
 
-  const handleFrameUploaded = () => {
-    console.log('Marco subido, recargando galería...');
-    loadFrames(); // Recargar marcos después de subir uno nuevo
+  const [logos, setLogos] = useState<Logo[]>([]);
+  const [showLogoModal, setShowLogoModal] = useState(false);
+  const [logosLoading, setLogosLoading] = useState(true);
+  const [logosError, setLogosError] = useState(false);
+
+  const loadLogos = async () => {
+    setLogosLoading(true);
+    setLogosError(false);
+    try {
+      const data = await logosAPI.list();
+      setLogos(data.logos);
+    } catch (err) {
+      console.error('Error al cargar logos:', err);
+      setLogosError(true);
+    } finally {
+      setLogosLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadFrames();
+    loadLogos();
+  }, []);
+
+  const applyFrame = (frame: Frame) => {
+    const newConfig = { ...config };
+    newConfig.styling.frame = {
+      ...(newConfig.styling.frame || {}),
+      type: 'custom',
+      customSrc: frame.imageUrl,
+      rotation: 0,
+      scale: 1,
+      layer: 'back',
+    };
+    onChange(newConfig);
+  };
+
+  const deleteFrame = async (frame: Frame) => {
+    if (!window.confirm(`¿Eliminar el marco "${frame.name}"?`)) return;
+    try {
+      await framesAPI.delete(frame.id);
+      loadFrames();
+    } catch (err: any) {
+      alert(err.message || 'Error al eliminar el marco');
+    }
+  };
+
+  const applyLogo = (logo: Logo) => {
+    updateStyling('logo', 'src', logo.imageUrl);
+  };
+
+  const deleteLogo = async (logo: Logo) => {
+    if (!window.confirm(`¿Eliminar el logo "${logo.name}"?`)) return;
+    try {
+      await logosAPI.delete(logo.id);
+      loadLogos();
+    } catch (err: any) {
+      alert(err.message || 'Error al eliminar el logo');
+    }
   };
 
   const updateStyling = (section: string, field: string, value: any) => {
@@ -79,38 +130,6 @@ export const QRDesignPanel: React.FC<QRDesignPanelProps> = ({ config, onChange }
       [field]: value
     };
     onChange(newConfig);
-  };
-
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        updateStyling('logo', 'src', reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleFrameUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const frame = ensureFrame();
-        const newConfig = { ...config };
-        newConfig.styling.frame = {
-          ...frame,
-          type: 'custom',
-          customSrc: reader.result as string,
-          rotation: 0,
-          scale: 1,
-          layer: 'back'
-        };
-        onChange(newConfig);
-      };
-      reader.readAsDataURL(file);
-    }
   };
 
   const resetFrameEdits = () => {
@@ -415,35 +434,48 @@ export const QRDesignPanel: React.FC<QRDesignPanelProps> = ({ config, onChange }
         {activeTab === 'logo' && (
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-bold text-gray-900 mb-4">Librería de Logos</label>
-              <div className="grid grid-cols-6 sm:grid-cols-8 gap-2">
-                {PRESET_LOGOS.map((logo) => (
-                  <button
-                    key={logo.id}
-                    onClick={() => updateStyling('logo', 'src', logo.src)}
-                    className={`aspect-square p-1.5 rounded-lg border flex items-center justify-center transition-all ${
-                      config.styling.logo?.src === logo.src ? 'border-blue-500 bg-blue-50 shadow-sm' : 'border-gray-100 hover:bg-gray-50'
-                    }`}
-                  >
-                    <img src={logo.src} alt={logo.label} className="w-full h-full object-contain" />
-                  </button>
-                ))}
-                <div className="relative group aspect-square">
-                  <input
-                    type="file"
-                    id="logo-upload-square"
-                    className="hidden"
-                    accept="image/*"
-                    onChange={handleLogoUpload}
-                  />
-                  <label 
-                    htmlFor="logo-upload-square" 
-                    className="w-full h-full rounded-lg border border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50/30 transition-all text-gray-400 hover:text-blue-500"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </label>
-                </div>
+              <div className="flex items-center justify-between mb-4">
+                <label className="block text-sm font-bold text-gray-900">Librería de Logos</label>
+                <button
+                  onClick={() => setShowLogoModal(true)}
+                  className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  <Plus className="w-3 h-3" /> Subir
+                </button>
               </div>
+              {logosLoading ? (
+                <p className="text-sm text-gray-400 italic">Cargando logos...</p>
+              ) : logosError ? (
+                <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                  No se pudo conectar al servidor de logos. Asegúrate de ejecutar el backend:
+                  <code className="block mt-2 p-2 bg-red-100 rounded text-xs font-mono">cd server && npm run dev</code>
+                </div>
+              ) : logos.length === 0 ? (
+                <p className="text-sm text-gray-400 italic">No hay logos guardados todavía.</p>
+              ) : (
+                <div className="grid grid-cols-6 sm:grid-cols-8 gap-2">
+                  {logos.map((logo) => (
+                    <div key={logo.id} className="group relative">
+                      <button
+                        onClick={() => applyLogo(logo)}
+                        className={`aspect-square p-1.5 rounded-lg border flex items-center justify-center transition-all w-full ${
+                          config.styling.logo?.src === logo.imageUrl ? 'border-blue-500 bg-blue-50 shadow-sm' : 'border-gray-100 hover:bg-gray-50'
+                        }`}
+                        title={logo.name}
+                      >
+                        <img src={logo.imageUrl} alt={logo.name} className="w-full h-full object-contain" />
+                      </button>
+                      <button
+                        onClick={() => deleteLogo(logo)}
+                        className="absolute top-0 right-0 p-1 bg-white/80 rounded-md text-red-500 hover:bg-red-50 hidden group-hover:block transition-colors"
+                        title="Eliminar logo"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {config.styling.logo?.src && (
@@ -527,159 +559,56 @@ export const QRDesignPanel: React.FC<QRDesignPanelProps> = ({ config, onChange }
               </div>
             </div>
 
-            {/* Galería de Marcos Prediseñados */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <label className="block text-sm font-bold text-gray-900 flex items-center gap-2">
-                  <Grid3x3 className="w-4 h-4 text-blue-500" />
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                  <ImageIcon className="w-4 h-4 text-blue-500" />
                   Librería de Marcos
-                </label>
-                {isAuthenticated && (
-                  <button
-                    onClick={() => setShowUploadModal(true)}
-                    className="flex items-center gap-1 px-2 py-1 text-xs font-bold text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                  >
-                    <Plus className="w-3 h-3" />
-                    Subir
-                  </button>
-                )}
+                </h4>
+                <button
+                  onClick={() => setShowUploadModal(true)}
+                  className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  <Plus className="w-3 h-3" /> Subir
+                </button>
               </div>
-
-              {loadingFrames ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+              {framesLoading ? (
+                <p className="text-sm text-gray-400 italic">Cargando marcos...</p>
+              ) : framesError ? (
+                <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                  No se pudo conectar al servidor de marcos. Asegúrate de ejecutar el backend en otra terminal:
+                  <code className="block mt-2 p-2 bg-red-100 rounded text-xs font-mono">cd server && npm run dev</code>
                 </div>
+              ) : frames.length === 0 ? (
+                <p className="text-sm text-gray-400 italic">No hay marcos guardados todavía.</p>
               ) : (
-                <div className="grid grid-cols-4 gap-2">
-                  {/* Marcos predefinidos */}
-                  {PRESET_FRAMES.map((frame) => (
-                    <button
+                <div className="grid grid-cols-3 gap-3">
+                  {frames.map((frame) => (
+                    <div
                       key={frame.id}
-                      onClick={() => {
-                        const currentFrame = ensureFrame();
-                        const newConfig = { ...config };
-                        newConfig.styling.frame = {
-                          ...currentFrame,
-                          type: 'custom',
-                          customSrc: frame.src,
-                          rotation: 0,
-                          scale: 1,
-                          layer: 'back'
-                        };
-                        onChange(newConfig);
-                      }}
-                      className={`group relative aspect-square p-1.5 rounded-lg border transition-all ${
-                        config.styling.frame?.customSrc === frame.src
-                          ? 'border-blue-500 bg-blue-50 shadow-sm'
-                          : 'border-gray-100 hover:bg-gray-50 hover:border-blue-300'
-                      }`}
-                      title={frame.label}
+                      className="group relative border border-gray-200 rounded-xl overflow-hidden bg-white"
                     >
-                      <div className="w-full h-full bg-gray-50 rounded overflow-hidden relative">
-                        <img
-                          src={frame.thumbnail}
-                          alt={frame.label}
-                          className="w-full h-full object-contain"
-                          onError={(e) => {
-                            e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect width="100" height="100" fill="%23e5e7eb"/%3E%3Ctext x="50" y="50" text-anchor="middle" dy=".3em" fill="%239ca3af" font-family="sans-serif" font-size="10"%3EMarco%3C/text%3E%3C/svg%3E';
-                          }}
-                        />
-                        {config.styling.frame?.customSrc === frame.src && (
-                          <div className="absolute top-0.5 right-0.5 bg-blue-600 rounded-full p-0.5">
-                            <Check className="w-2.5 h-2.5 text-white" />
-                          </div>
-                        )}
-                      </div>
-                    </button>
-                  ))}
-
-                  {/* Marcos personalizados de la base de datos */}
-                  {customFrames.length > 0 && customFrames.map((frame) => {
-                    const frameUrl = `http://localhost:5000${frame.image_url}`;
-                    console.log('Renderizando marco personalizado:', frame.name, frameUrl);
-                    return (
                       <button
-                        key={`custom-${frame.id}`}
-                        onClick={() => {
-                          const currentFrame = ensureFrame();
-                          const newConfig = { ...config };
-                          newConfig.styling.frame = {
-                            ...currentFrame,
-                            type: 'custom',
-                            customSrc: frameUrl,
-                            rotation: 0,
-                            scale: 1,
-                            layer: 'back'
-                          };
-                          onChange(newConfig);
-                        }}
-                        className={`group relative aspect-square p-1.5 rounded-lg border transition-all ${
-                          config.styling.frame?.customSrc === frameUrl
-                            ? 'border-blue-500 bg-blue-50 shadow-sm'
-                            : 'border-gray-100 hover:bg-gray-50 hover:border-blue-300'
-                        }`}
+                        onClick={() => applyFrame(frame)}
+                        className="w-full aspect-square flex items-center justify-center p-2 hover:bg-gray-50 transition-colors"
                         title={frame.name}
                       >
-                        <div className="w-full h-full bg-gray-50 rounded overflow-hidden relative">
-                          <img
-                            src={frameUrl}
-                            alt={frame.name}
-                            className="w-full h-full object-contain"
-                            onError={(e) => {
-                              e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect width="100" height="100" fill="%23e5e7eb"/%3E%3Ctext x="50" y="50" text-anchor="middle" dy=".3em" fill="%239ca3af" font-family="sans-serif" font-size="10"%3EMarco%3C/text%3E%3C/svg%3E';
-                            }}
-                          />
-                          {config.styling.frame?.customSrc === frameUrl && (
-                            <div className="absolute top-0.5 right-0.5 bg-blue-600 rounded-full p-0.5">
-                              <Check className="w-2.5 h-2.5 text-white" />
-                            </div>
-                          )}
-                          {/* Badge para marcos personalizados */}
-                          {frame.user_id && (
-                            <div className="absolute bottom-0.5 left-0.5 bg-purple-600 text-white text-[8px] font-bold px-1 py-0.5 rounded">
-                              CUSTOM
-                            </div>
-                          )}
-                        </div>
+                        <img src={frame.imageUrl} alt={frame.name} className="w-full h-full object-contain" />
                       </button>
-                    );
-                  })}
+                      <button
+                        onClick={() => deleteFrame(frame)}
+                        className="absolute top-1 right-1 p-1 bg-white/80 rounded-md text-red-500 hover:bg-red-50 hidden group-hover:block transition-colors"
+                        title="Eliminar marco"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
 
             <div className="space-y-4">
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Diseño Personalizado</label>
-              <div className="relative">
-                <input
-                  type="file"
-                  id="frame-upload"
-                  className="hidden"
-                  accept="image/*"
-                  onChange={handleFrameUpload}
-                />
-                <label
-                  htmlFor="frame-upload"
-                  className={`w-full flex items-center justify-center gap-3 p-4 rounded-xl border-2 border-dashed transition-all cursor-pointer ${
-                    config.styling.frame?.type === 'custom'
-                    ? 'border-blue-500 bg-blue-50 text-blue-600'
-                    : 'border-gray-200 hover:border-blue-300 text-gray-400 hover:text-blue-500'
-                  }`}
-                >
-                  {config.styling.frame?.customSrc && !PRESET_FRAMES.find(f => f.src === config.styling.frame?.customSrc) ? (
-                    <>
-                      <img src={config.styling.frame.customSrc} className="w-8 h-8 object-contain rounded" alt="Custom Frame" />
-                      <span className="text-sm font-bold">Cambiar Marco</span>
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="w-6 h-6" />
-                      <span className="text-sm font-bold">Subir Marco Personalizado</span>
-                    </>
-                  )}
-                </label>
-              </div>
-              
               {config.styling.frame?.type === 'custom' && (
                 <div className="space-y-6 mt-6 p-5 bg-gray-50 rounded-2xl border border-gray-100 animate-in fade-in slide-in-from-top-2">
                   <div className="flex items-center justify-between mb-2">
@@ -822,12 +751,15 @@ export const QRDesignPanel: React.FC<QRDesignPanelProps> = ({ config, onChange }
           </div>
         )}
       </div>
-
-      {/* Modal de subida de marcos */}
       <UploadFrameModal
         isOpen={showUploadModal}
         onClose={() => setShowUploadModal(false)}
-        onSuccess={handleFrameUploaded}
+        onSuccess={loadFrames}
+      />
+      <UploadLogoModal
+        isOpen={showLogoModal}
+        onClose={() => setShowLogoModal(false)}
+        onSuccess={loadLogos}
       />
     </div>
   );

@@ -12,10 +12,9 @@ dist
 dist-ssr
 *.local
 .env
-*.db
-
-# Scaffold residual
-/qr-pro-studio/
+server/uploads
+database/*.db
+qr-pro-studio/
 
 # Editor directories and files
 .vscode/*

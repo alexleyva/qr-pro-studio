@@ -2,6 +2,7 @@
 import React, { useEffect, useRef } from 'react';
 import QRCodeStyling from 'qr-code-styling';
 import { QRConfig, QRType } from '../types';
+import { COUNTRY_CODES } from '../constants';
 import * as LucideIcons from 'lucide-react';
 
 const { Download: DownloadIcon, Share2: Share2Icon, Copy: CopyIcon } = LucideIcons;
@@ -22,20 +23,19 @@ export const QRPreview: React.FC<QRPreviewProps> = ({ config }) => {
       case QRType.EMAIL: return `mailto:${content.email || ''}?subject=${content.subject || ''}`;
       case QRType.WIFI: return `WIFI:S:${content.ssid || ''};T:${content.encryption || 'WPA'};P:${content.password || ''};;`;
       case QRType.PHONE: return `tel:${content.phone || ''}`;
-      case QRType.WHATSAPP: return `https://wa.me/${content.phone || ''}`;
-      case QRType.PDF:
-        // Si hay datos del archivo, usar el base64, sino usar URL por defecto
-        if (content.fileData) {
-          return content.fileData;
-        }
-        return content.fileUrl || 'https://qrprostudio.app';
+      case QRType.WHATSAPP: {
+        const dial = COUNTRY_CODES.find((c) => c.code === content.countryCode)?.dial || '';
+        const phone = `${dial}${content.phone || ''}`.replace(/[^\d]/g, '');
+        const message = content.message ? `?text=${encodeURIComponent(content.message)}` : '';
+        return `https://wa.me/${phone}${message}`;
+      }
       default: return 'https://qrprostudio.app';
     }
   };
 
   useEffect(() => {
-    // Tamaño del QR optimizado para mejor legibilidad
-    const qrSize = config.styling.frame?.type !== 'none' ? 240 : 320;
+    // Reducimos el tamaño del QR interno a 180px para dar mucho más aire al marco
+    const qrSize = config.styling.frame?.type !== 'none' ? 180 : 260;
 
     const qrCode = new QRCodeStyling({
       width: qrSize,
@@ -88,7 +88,7 @@ export const QRPreview: React.FC<QRPreviewProps> = ({ config }) => {
       return;
     }
 
-    const exportSize = 1536; // Aumentado a 1536px para mejor calidad
+    const exportSize = 1024; 
     const canvas = document.createElement('canvas');
     canvas.width = exportSize;
     canvas.height = exportSize;
@@ -119,20 +119,13 @@ export const QRPreview: React.FC<QRPreviewProps> = ({ config }) => {
       ctx.fillRect(exportSize - bracketWidth, 0, bracketWidth, exportSize);
     }
 
-    // 4. Dibujar el Código QR con bordes redondeados
+    // 4. Dibujar el Código QR (Reducido al 55% para seguridad)
     const qrBlob = await qrCodeRef.current.getRawData('png');
     if (qrBlob) {
       const qrImg = await blobToImage(qrBlob);
       const qrDrawSize = exportSize * 0.55; // Mucho más pequeño para no solapar marcos rotados
       const qrPos = (exportSize - qrDrawSize) / 2;
-      const borderRadius = exportSize * 0.02; // 2% del tamaño total para bordes redondeados
-
-      // Guardar el contexto y aplicar clip con bordes redondeados
-      ctx.save();
-      roundRect(ctx, qrPos, qrPos, qrDrawSize, qrDrawSize, borderRadius);
-      ctx.clip();
       ctx.drawImage(qrImg, qrPos, qrPos, qrDrawSize, qrDrawSize);
-      ctx.restore();
     }
 
     // 5. Dibujar Marco Personalizado (si está al frente)
@@ -228,7 +221,7 @@ export const QRPreview: React.FC<QRPreviewProps> = ({ config }) => {
 
   const getFrameStyles = (): React.CSSProperties => {
     const frame = config.styling.frame;
-    const containerSize = '380px';
+    const containerSize = '320px';
 
     if (!frame || frame.type === 'none') {
       return { 
@@ -314,7 +307,7 @@ export const QRPreview: React.FC<QRPreviewProps> = ({ config }) => {
     <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100 sticky top-8">
       <h3 className="text-xl font-bold text-gray-900 mb-6 text-center">Vista Previa</h3>
       
-      <div className="w-full bg-gray-50 rounded-xl overflow-hidden flex flex-col items-center justify-center p-4 md:p-8 mb-6 shadow-inner min-h-[480px]">
+      <div className="w-full bg-gray-50 rounded-xl overflow-hidden flex flex-col items-center justify-center p-4 md:p-8 mb-6 shadow-inner min-h-[420px]">
         <div style={getFrameStyles()}>
           {config.styling.frame?.type === 'custom' && config.styling.frame.customSrc && (
             <img 
@@ -324,14 +317,7 @@ export const QRPreview: React.FC<QRPreviewProps> = ({ config }) => {
             />
           )}
           {config.styling.frame?.type === 'label-top' && renderFrameOverlay()}
-          <div
-            ref={qrContainerRef}
-            className="qr-container flex justify-center items-center relative z-10"
-            style={{
-              borderRadius: '16px',
-              overflow: 'hidden'
-            }}
-          />
+          <div ref={qrContainerRef} className="qr-container flex justify-center items-center relative z-10" />
           {config.styling.frame?.type !== 'label-top' && renderFrameOverlay()}
         </div>
       </div>

@@ -5,16 +5,15 @@ import { QR_TYPES } from './constants';
 import { QRForms } from './components/QRForms';
 import { QRDesignPanel } from './components/QRDesignPanel';
 import { QRPreview } from './components/QRPreview';
+import { Sparkles, History, HelpCircle, Layers } from 'lucide-react';
+import { useAuth } from './context/AuthContext';
 import { LoginModal } from './components/Auth/LoginModal';
 import { RegisterModal } from './components/Auth/RegisterModal';
 import { UserMenu } from './components/Auth/UserMenu';
-import { useAuth } from './context/AuthContext';
-import { Sparkles, History, HelpCircle, Layers, Save } from 'lucide-react';
 
 const App: React.FC = () => {
-  const { isAuthenticated } = useAuth();
-  const [showLoginModal, setShowLoginModal] = useState(false);
-  const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const { user } = useAuth();
+  const [authModal, setAuthModal] = useState<'login' | 'register' | null>(null);
 
   const [config, setConfig] = useState<QRConfig>({
     type: QRType.URL,
@@ -69,7 +68,7 @@ const App: React.FC = () => {
               <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600">
                 QR Pro Studio
               </h1>
-              <p className="text-[10px] uppercase tracking-widest text-gray-400 font-bold">Diseña & Genera</p>
+              <p className="text-[10px] uppercase tracking-widest text-gray-400 font-bold">Design & Generate</p>
             </div>
           </div>
 
@@ -79,19 +78,18 @@ const App: React.FC = () => {
               <History className="w-4 h-4" /> Historial
             </a>
             <a href="#" className="text-gray-600 hover:text-blue-600 font-medium transition-colors">Precios</a>
-
-            {isAuthenticated ? (
+            {user ? (
               <UserMenu />
             ) : (
               <>
                 <button
-                  onClick={() => setShowLoginModal(true)}
+                  onClick={() => setAuthModal('login')}
                   className="bg-gray-100 text-gray-900 px-6 py-2.5 rounded-xl font-bold hover:bg-gray-200 transition-all"
                 >
                   Login
                 </button>
                 <button
-                  onClick={() => setShowRegisterModal(true)}
+                  onClick={() => setAuthModal('register')}
                   className="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100"
                 >
                   Registrarse
@@ -194,22 +192,15 @@ const App: React.FC = () => {
         </div>
       </footer>
 
-      {/* Modales de autenticación */}
       <LoginModal
-        isOpen={showLoginModal}
-        onClose={() => setShowLoginModal(false)}
-        onSwitchToRegister={() => {
-          setShowLoginModal(false);
-          setShowRegisterModal(true);
-        }}
+        isOpen={authModal === 'login'}
+        onClose={() => setAuthModal(null)}
+        onSwitchToRegister={() => setAuthModal('register')}
       />
       <RegisterModal
-        isOpen={showRegisterModal}
-        onClose={() => setShowRegisterModal(false)}
-        onSwitchToLogin={() => {
-          setShowRegisterModal(false);
-          setShowLoginModal(true);
-        }}
+        isOpen={authModal === 'register'}
+        onClose={() => setAuthModal(null)}
+        onSwitchToLogin={() => setAuthModal('login')}
       />
     </div>
   );

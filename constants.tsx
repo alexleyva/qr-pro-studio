@@ -26,6 +26,48 @@ export const QR_TYPES = [
   { id: QRType.EVENT, label: 'Evento', icon: <Calendar className="w-6 h-6" /> },
 ];
 
+export const COUNTRY_CODES = [
+  { code: 'ES', name: 'España', dial: '+34', flag: '🇪🇸' },
+  { code: 'MX', name: 'México', dial: '+52', flag: '🇲🇽' },
+  { code: 'AR', name: 'Argentina', dial: '+54', flag: '🇦🇷' },
+  { code: 'CO', name: 'Colombia', dial: '+57', flag: '🇨🇴' },
+  { code: 'CL', name: 'Chile', dial: '+56', flag: '🇨🇱' },
+  { code: 'PE', name: 'Perú', dial: '+51', flag: '🇵🇪' },
+  { code: 'VE', name: 'Venezuela', dial: '+58', flag: '🇻🇪' },
+  { code: 'EC', name: 'Ecuador', dial: '+593', flag: '🇪🇨' },
+  { code: 'GT', name: 'Guatemala', dial: '+502', flag: '🇬🇹' },
+  { code: 'CU', name: 'Cuba', dial: '+53', flag: '🇨🇺' },
+  { code: 'BO', name: 'Bolivia', dial: '+591', flag: '🇧🇴' },
+  { code: 'DO', name: 'República Dominicana', dial: '+1', flag: '🇩🇴' },
+  { code: 'HN', name: 'Honduras', dial: '+504', flag: '🇭🇳' },
+  { code: 'PY', name: 'Paraguay', dial: '+595', flag: '🇵🇾' },
+  { code: 'SV', name: 'El Salvador', dial: '+503', flag: '🇸🇻' },
+  { code: 'NI', name: 'Nicaragua', dial: '+505', flag: '🇳🇮' },
+  { code: 'CR', name: 'Costa Rica', dial: '+506', flag: '🇨🇷' },
+  { code: 'PA', name: 'Panamá', dial: '+507', flag: '🇵🇦' },
+  { code: 'UY', name: 'Uruguay', dial: '+598', flag: '🇺🇾' },
+  { code: 'PR', name: 'Puerto Rico', dial: '+1', flag: '🇵🇷' },
+  { code: 'US', name: 'Estados Unidos', dial: '+1', flag: '🇺🇸' },
+  { code: 'CA', name: 'Canadá', dial: '+1', flag: '🇨🇦' },
+  { code: 'BR', name: 'Brasil', dial: '+55', flag: '🇧🇷' },
+  { code: 'DE', name: 'Alemania', dial: '+49', flag: '🇩🇪' },
+  { code: 'FR', name: 'Francia', dial: '+33', flag: '🇫🇷' },
+  { code: 'IT', name: 'Italia', dial: '+39', flag: '🇮🇹' },
+  { code: 'PT', name: 'Portugal', dial: '+351', flag: '🇵🇹' },
+  { code: 'GB', name: 'Reino Unido', dial: '+44', flag: '🇬🇧' },
+  { code: 'NL', name: 'Países Bajos', dial: '+31', flag: '🇳🇱' },
+  { code: 'BE', name: 'Bélgica', dial: '+32', flag: '🇧🇪' },
+  { code: 'CH', name: 'Suiza', dial: '+41', flag: '🇨🇭' },
+  { code: 'CN', name: 'China', dial: '+86', flag: '🇨🇳' },
+  { code: 'JP', name: 'Japón', dial: '+81', flag: '🇯🇵' },
+  { code: 'KR', name: 'Corea del Sur', dial: '+82', flag: '🇰🇷' },
+  { code: 'IN', name: 'India', dial: '+91', flag: '🇮🇳' },
+  { code: 'AU', name: 'Australia', dial: '+61', flag: '🇦🇺' },
+];
+
+export const getFlagUrl = (code: string) =>
+  `/flags/${code.toLowerCase()}.png`;
+
 export const DOT_STYLES = [
   { id: 'square', label: 'Cuadrado' },
   { id: 'dots', label: 'Puntos' },
@@ -59,55 +101,4 @@ export const PRESET_LOGOS = [
   { id: 'linkedin', label: 'LinkedIn', src: 'https://cdn-icons-png.flaticon.com/512/174/174857.png' },
   { id: 'paypal', label: 'PayPal', src: 'https://cdn-icons-png.flaticon.com/512/174/174861.png' },
   { id: 'bitcoin', label: 'Bitcoin', src: 'https://cdn-icons-png.flaticon.com/512/5968/5968260.png' },
-];
-
-export const PRESET_FRAMES = [
-  {
-    id: 'modern-gradient',
-    label: 'Gradiente Moderno',
-    src: 'https://raw.githubusercontent.com/qr-code-styling/qr-code-styling/master/src/assets/frames/frame1.svg',
-    thumbnail: 'https://raw.githubusercontent.com/qr-code-styling/qr-code-styling/master/src/assets/frames/frame1.svg'
-  },
-  {
-    id: 'elegant-border',
-    label: 'Borde Elegante',
-    src: 'https://raw.githubusercontent.com/qr-code-styling/qr-code-styling/master/src/assets/frames/frame2.svg',
-    thumbnail: 'https://raw.githubusercontent.com/qr-code-styling/qr-code-styling/master/src/assets/frames/frame2.svg'
-  },
-  {
-    id: 'minimal-circle',
-    label: 'Círculo Minimalista',
-    src: 'https://raw.githubusercontent.com/qr-code-styling/qr-code-styling/master/src/assets/frames/frame3.svg',
-    thumbnail: 'https://raw.githubusercontent.com/qr-code-styling/qr-code-styling/master/src/assets/frames/frame3.svg'
-  },
-  {
-    id: 'tech-frame',
-    label: 'Marco Tecnológico',
-    src: 'https://raw.githubusercontent.com/qr-code-styling/qr-code-styling/master/src/assets/frames/frame4.svg',
-    thumbnail: 'https://raw.githubusercontent.com/qr-code-styling/qr-code-styling/master/src/assets/frames/frame4.svg'
-  },
-  {
-    id: 'vintage-ornate',
-    label: 'Vintage Ornamentado',
-    src: 'https://raw.githubusercontent.com/qr-code-styling/qr-code-styling/master/src/assets/frames/frame5.svg',
-    thumbnail: 'https://raw.githubusercontent.com/qr-code-styling/qr-code-styling/master/src/assets/frames/frame5.svg'
-  },
-  {
-    id: 'neon-glow',
-    label: 'Neón Brillante',
-    src: 'https://raw.githubusercontent.com/qr-code-styling/qr-code-styling/master/src/assets/frames/frame6.svg',
-    thumbnail: 'https://raw.githubusercontent.com/qr-code-styling/qr-code-styling/master/src/assets/frames/frame6.svg'
-  },
-  {
-    id: 'nature-leaf',
-    label: 'Hojas Naturales',
-    src: 'https://raw.githubusercontent.com/qr-code-styling/qr-code-styling/master/src/assets/frames/frame7.svg',
-    thumbnail: 'https://raw.githubusercontent.com/qr-code-styling/qr-code-styling/master/src/assets/frames/frame7.svg'
-  },
-  {
-    id: 'geometric-pattern',
-    label: 'Patrón Geométrico',
-    src: 'https://raw.githubusercontent.com/qr-code-styling/qr-code-styling/master/src/assets/frames/frame8.svg',
-    thumbnail: 'https://raw.githubusercontent.com/qr-code-styling/qr-code-styling/master/src/assets/frames/frame8.svg'
-  },
 ];
