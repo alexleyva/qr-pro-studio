@@ -99,8 +99,9 @@ router.delete('/:id', optionalAuth, (req, res) => {
     return res.status(403).json({ message: 'No tienes permiso para eliminar este marco' });
   }
 
-  if (row.image_url && row.image_url.startsWith('/uploads/')) {
-    const filePath = path.join(__dirname, '..', row.image_url);
+  const imageUrl = String(row.image_url || '');
+  if (imageUrl.startsWith('/uploads/')) {
+    const filePath = path.join(__dirname, '..', imageUrl);
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
   }
 
