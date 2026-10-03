@@ -37,10 +37,10 @@ export const QRPreview: React.FC<QRPreviewProps> = ({ config }) => {
     // Reducimos el tamaño del QR interno a 180px para dar mucho más aire al marco
     const qrSize = config.styling.frame?.type !== 'none' ? 180 : 260;
 
-    const qrCode = new QRCodeStyling({
+    const options = {
       width: qrSize,
       height: qrSize,
-      type: 'svg',
+      type: 'svg' as const,
       data: getQRContent(),
       dotsOptions: {
         color: config.styling.dots.color,
@@ -71,13 +71,18 @@ export const QRPreview: React.FC<QRPreviewProps> = ({ config }) => {
         imageSize: config.styling.logo?.size ? config.styling.logo.size / 100 : 0.4
       },
       image: config.styling.logo?.src || undefined
-    });
+    };
 
-    if (qrContainerRef.current) {
-      qrContainerRef.current.innerHTML = '';
-      qrCode.append(qrContainerRef.current);
+    if (!qrCodeRef.current) {
+      // Primera vez: crear la instancia y adjuntarla al contenedor una sola vez.
+      qrCodeRef.current = new QRCodeStyling(options);
+      if (qrContainerRef.current) {
+        qrCodeRef.current.append(qrContainerRef.current);
+      }
+    } else {
+      // Reutilizar la instancia y actualizar opciones sin tocar el DOM manualmente.
+      qrCodeRef.current.update(options);
     }
-    qrCodeRef.current = qrCode;
   }, [config]);
 
   const handleDownload = async (format: 'png' | 'svg' | 'pdf') => {

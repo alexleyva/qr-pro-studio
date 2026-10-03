@@ -28,7 +28,7 @@ export const QRDesignPanel: React.FC<QRDesignPanelProps> = ({ config, onChange }
     setFramesError(false);
     try {
       const data = await framesAPI.list();
-      setFrames(data.frames);
+      setFrames(Array.isArray(data?.frames) ? data.frames : []);
     } catch (err) {
       console.error('Error al cargar marcos:', err);
       setFramesError(true);
@@ -47,7 +47,7 @@ export const QRDesignPanel: React.FC<QRDesignPanelProps> = ({ config, onChange }
     setLogosError(false);
     try {
       const data = await logosAPI.list();
-      setLogos(data.logos);
+      setLogos(Array.isArray(data?.logos) ? data.logos : []);
     } catch (err) {
       console.error('Error al cargar logos:', err);
       setLogosError(true);

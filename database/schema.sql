@@ -91,6 +91,16 @@ CREATE TABLE IF NOT EXISTS user_favorites (
     UNIQUE(user_id, item_type, item_id)
 );
 
+-- Tabla para recordar elementos predefinidos (marcos/logos) eliminados
+-- y evitar que se vuelvan a sembrar al reiniciar el servidor.
+CREATE TABLE IF NOT EXISTS deleted_presets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    item_type VARCHAR(20) NOT NULL, -- frame, logo
+    image_url TEXT NOT NULL,
+    deleted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(item_type, image_url)
+);
+
 -- Tabla de historial de escaneos (analytics)
 CREATE TABLE IF NOT EXISTS qr_scans (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

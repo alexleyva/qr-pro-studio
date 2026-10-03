@@ -105,6 +105,13 @@ router.delete('/:id', optionalAuth, (req, res) => {
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
   }
 
+  // Si es un marco predefinido, recordarlo para no volver a sembrarlo al reiniciar
+  if (row.user_id === null && imageUrl.startsWith('/images/')) {
+    db.prepare(
+      'INSERT OR IGNORE INTO deleted_presets (item_type, image_url) VALUES (?, ?)'
+    ).run('frame', imageUrl);
+  }
+
   db.prepare('DELETE FROM custom_frames WHERE id = ?').run(id);
   res.json({ message: 'Marco eliminado correctamente' });
 });

@@ -2,6 +2,15 @@ const fs = require('fs');
 const path = require('path');
 const db = require('./db');
 
+// Indica si un elemento predefinido (marco/logo) fue eliminado por el usuario,
+// para evitar que se vuelva a sembrar al reiniciar el servidor.
+function isPresetDeleted(itemType, imageUrl) {
+  const row = db
+    .prepare('SELECT id FROM deleted_presets WHERE item_type = ? AND image_url = ?')
+    .get(itemType, imageUrl);
+  return !!row;
+}
+
 // Siembra los marcos que ya están en database/images como marcos predefinidos públicos.
 function seedPresetFrames() {
   const imagesDir = path.join(__dirname, '..', 'database', 'images');
@@ -18,6 +27,7 @@ function seedPresetFrames() {
   let count = 0;
   for (const file of files) {
     const imageUrl = '/images/' + encodeURIComponent(file);
+    if (isPresetDeleted('frame', imageUrl)) continue;
     const existing = db.prepare('SELECT id FROM custom_frames WHERE image_url = ?').get(imageUrl);
     if (existing) continue;
 
@@ -49,6 +59,7 @@ function seedPresetLogos() {
   let count = 0;
   for (const logo of PRESET_LOGOS) {
     const imageUrl = '/images/logos/' + logo.file;
+    if (isPresetDeleted('logo', imageUrl)) continue;
     const existing = db.prepare('SELECT id FROM custom_logos WHERE image_url = ?').get(imageUrl);
     if (existing) continue;
     insert.run(null, logo.name, 'Logo predefinido', imageUrl, imageUrl, 1, 'social');
