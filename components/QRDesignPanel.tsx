@@ -754,11 +754,12 @@ export const QRDesignPanel: React.FC<QRDesignPanelProps> = ({ config, onChange }
           </div>
         )}
       </div>
-      <UploadFrameModal
-        isOpen={showUploadModal}
-        onClose={() => setShowUploadModal(false)}
-        onSuccess={loadFrames}
-      />
+      {showUploadModal && (
+        <UploadFrameModal
+          onClose={() => setShowUploadModal(false)}
+          onSuccess={loadFrames}
+        />
+      )}
       <UploadLogoModal
         isOpen={showLogoModal}
         onClose={() => setShowLogoModal(false)}

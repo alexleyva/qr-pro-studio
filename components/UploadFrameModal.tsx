@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
-import { X, Upload, Image as ImageIcon, AlertCircle, Check } from 'lucide-react';
+import { X, Upload, Image as ImageIcon, AlertCircle, Check, LoaderCircle } from 'lucide-react';
 import { framesAPI } from '../services/api';
 
 interface UploadFrameModalProps {
-  isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
 }
 
-export const UploadFrameModal: React.FC<UploadFrameModalProps> = ({ isOpen, onClose, onSuccess }) => {
+export const UploadFrameModal: React.FC<UploadFrameModalProps> = ({ onClose, onSuccess }) => {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string>('');
   const [name, setName] = useState('');
@@ -18,8 +17,6 @@ export const UploadFrameModal: React.FC<UploadFrameModalProps> = ({ isOpen, onCl
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
-
-  if (!isOpen) return null;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -259,15 +256,15 @@ export const UploadFrameModal: React.FC<UploadFrameModalProps> = ({ isOpen, onCl
               disabled={loading || !file}
             >
               {loading ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Subiendo...
-                </>
+                <span key="loading" className="inline-flex items-center gap-2">
+                  <LoaderCircle className="w-4 h-4 animate-spin" />
+                  <span>Subiendo...</span>
+                </span>
               ) : (
-                <>
+                <span key="idle" className="inline-flex items-center gap-2">
                   <Upload className="w-4 h-4" />
-                  Subir Marco
-                </>
+                  <span>Subir Marco</span>
+                </span>
               )}
             </button>
           </div>
